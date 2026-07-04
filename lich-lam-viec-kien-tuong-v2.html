@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lịch làm việc - Điện Máy Xanh Kiến Tường</title>
+<style>
+  :root{
+    --green-deep:#0a5c36;
+    --green:#0f8a4b;
+    --green-bright:#12a85a;
+    --cream:#fbfaf6;
+    --ink:#16241c;
+    --off-bg:#fdeceb;
+    --off-text:#c0392b;
+    --line:#e3e8e2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, -apple-system, sans-serif;
+    background:linear-gradient(180deg,#eef6f0 0%, var(--cream) 220px);
+    color:var(--ink);
+    padding:0 0 40px;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 16px 0;}
+
+  .header{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+  .logo-mark{
+    width:48px;height:48px;border-radius:13px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--green-bright),var(--green-deep));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px rgba(15,138,75,.28);
+  }
+  .logo-mark svg{width:26px;height:26px;}
+  .title-block h1{margin:0;font-size:clamp(22px,5vw,34px);letter-spacing:.5px;color:var(--green-deep);font-weight:800;}
+  .title-block .sub{margin-top:2px;font-size:13px;color:#5c6b62;font-weight:500;}
+
+  /* ---- controls ---- */
+  .controls{
+    margin-top:16px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-left:5px solid var(--green);
+    border-radius:12px;
+    padding:14px 16px;
+    box-shadow:0 2px 10px rgba(20,50,30,.04);
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px 20px;
+    align-items:center;
+  }
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:11.5px;font-weight:700;color:#5c6b62;text-transform:uppercase;letter-spacing:.4px;}
+  .field input[type=date]{
+    border:1px solid #cfe0d4;
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--ink);
+    background:#f7faf7;
+  }
+  .field input[type=date]:focus{outline:2px solid var(--green-bright);outline-offset:1px;}
+  .range-label{font-size:13.5px;color:#33443a;}
+  .range-label b{color:var(--green-deep);}
+
+  /* ---- day picker pills ---- */
+  .day-tabs{
+    margin-top:14px;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .day-pill{
+    flex:0 0 auto;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:999px;
+    padding:8px 14px;
+    font-size:12.5px;
+    font-weight:700;
+    color:#4a5a4f;
+    cursor:pointer;
+    text-align:center;
+    line-height:1.35;
+    transition:.15s;
+  }
+  .day-pill .d{display:block;font-size:11px;font-weight:600;opacity:.75;}
+  .day-pill.active{
+    background:linear-gradient(180deg,var(--green-bright),var(--green));
+    border-color:var(--green);
+    color:#fff;
+  }
+  .day-pill.today{box-shadow:0 0 0 2px #d9a11a inset;}
+
+  /* ---- table ---- */
+  .table-card{
+    margin-top:16px;
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(20,50,30,.08);
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .fade-right{
+    position:absolute;right:0;top:0;bottom:0;width:28px;
+    background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.9));
+    pointer-events:none;
+    transition:opacity .2s;
+  }
+  table{border-collapse:collapse;width:100%;min-width:760px;}
+  thead th{
+    background:linear-gradient(180deg,var(--green-bright),var(--green));
+    color:#fff;padding:12px 8px;font-size:13.5px;letter-spacing:.3px;text-align:center;
+  }
+  thead th .day{display:block;font-weight:800;font-size:14.5px;}
+  thead th .date{display:block;font-weight:500;font-size:12px;opacity:.92;margin-top:2px;}
+  thead th.corner{text-align:left;padding-left:16px;}
+  thead th.col-active{background:linear-gradient(180deg,#0d7f47,#0a5c36);}
+
+  tbody tr{border-bottom:1px solid var(--line);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:nth-child(even) td{background:#f7faf7;}
+  tbody tr:nth-child(even) td.name-cell{background:#eef6f0;}
+
+  td{padding:14px 8px;text-align:center;vertical-align:middle;font-size:14px;color:var(--ink);}
+  td.name-cell{
+    text-align:left;padding-left:16px;font-weight:800;color:var(--green-deep);
+    font-size:14.5px;background:#f2f8f3;border-right:2px solid var(--green);white-space:nowrap;
+  }
+  td.col-active{background:#eafaf0 !important;}
+
+  .shift-pill{
+    display:inline-block;padding:6px 9px;border-radius:8px;background:#eaf6ee;
+    font-weight:700;font-variant-numeric:tabular-nums;color:var(--green-deep);font-size:13px;white-space:nowrap;
+  }
+  .off{
+    display:inline-flex;align-items:center;gap:6px;background:var(--off-bg);color:var(--off-text);
+    font-weight:800;padding:7px 12px;border-radius:999px;font-size:12px;letter-spacing:.3px;white-space:nowrap;
+  }
+  .off::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--off-text);}
+
+  /* ---- day detail card (mobile-friendly summary) ---- */
+  .day-detail{
+    margin-top:18px;background:#fff;border-radius:14px;border:1px solid var(--line);
+    padding:16px 18px;box-shadow:0 4px 16px rgba(20,50,30,.05);
+  }
+  .day-detail h3{margin:0 0 10px;font-size:15px;color:var(--green-deep);}
+  .day-detail h3 span{font-weight:500;color:#5c6b62;font-size:13px;}
+  .detail-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 0;border-bottom:1px dashed var(--line);
+  }
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row .emp{font-weight:700;color:var(--ink);font-size:14px;}
+
+  .note{
+    margin-top:18px;background:#fff8e8;border:1px solid #f3dfa4;border-left:5px solid #d9a11a;
+    border-radius:12px;padding:13px 16px;font-size:13px;color:#6b5311;display:flex;gap:9px;align-items:flex-start;
+  }
+  .note b{color:#8a6a10;}
+
+  /* ---- editable cells ---- */
+  .cell-btn{
+    border:none;background:none;padding:0;margin:0;cursor:pointer;font:inherit;
+    border-radius:8px;
+    display:inline-block;
+  }
+  .cell-btn:focus-visible{outline:2px solid var(--green-bright);outline-offset:2px;}
+  .cell-btn:hover .shift-pill{background:#d9f0e2;}
+  .cell-btn:hover .off{background:#fbdcda;}
+  .hint{font-size:11px;color:#8fa093;margin-top:8px;text-align:center;}
+
+  /* ---- modal ---- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(10,25,15,.45);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:16px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:#fff;border-radius:16px;padding:22px 22px 18px;width:100%;max-width:340px;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+  }
+  .modal h4{margin:0 0 2px;font-size:16px;color:var(--green-deep);}
+  .modal .sub{font-size:12.5px;color:#5c6b62;margin-bottom:16px;}
+  .toggle-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:#f7faf7;border-radius:10px;padding:10px 12px;margin-bottom:14px;
+  }
+  .toggle-row span{font-size:13.5px;font-weight:700;color:var(--ink);}
+  .switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;inset:0;background:#cfd9d2;border-radius:999px;cursor:pointer;transition:.2s;
+  }
+  .slider::before{
+    content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;
+  }
+  .switch input:checked + .slider{background:var(--off-text);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}
+  .time-fields{display:flex;gap:10px;margin-bottom:6px;}
+  .time-fields .field{flex:1;}
+  .time-fields input[type=time]{
+    width:100%;border:1px solid #cfe0d4;border-radius:8px;padding:8px 8px;font-size:14px;font-family:inherit;background:#f7faf7;
+  }
+  .time-fields.disabled{opacity:.4;pointer-events:none;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .btn{
+    flex:1;border:none;border-radius:10px;padding:11px 10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .btn.cancel{background:#f0f2ef;color:#556154;}
+  .btn.save{background:linear-gradient(180deg,var(--green-bright),var(--green));color:#fff;}
+
+  /* ---- wheel time picker ---- */
+  .wheel-group{display:flex;gap:14px;margin-bottom:8px;}
+  .wheel-group.disabled{opacity:.35;pointer-events:none;}
+  .wheel-block{flex:1;}
+  .wheel-block > label{display:block;font-size:11.5px;font-weight:700;color:#5c6b62;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;text-align:center;}
+  .wheel-pair{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    background:#f7faf7;border-radius:12px;border:1px solid #e3e8e2;
+    height:150px;overflow:hidden;
+  }
+  .wheel-band{
+    position:absolute;left:6px;right:6px;top:50px;height:50px;
+    background:#e6f5eb;border-radius:8px;pointer-events:none;z-index:0;
+  }
+  .wheel{
+    position:relative;z-index:1;width:56px;height:150px;overflow-y:scroll;
+    scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .wheel::-webkit-scrollbar{display:none;}
+  .wheel-item{
+    height:50px;display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:600;color:#c3ccc5;scroll-snap-align:center;
+    font-variant-numeric:tabular-nums;cursor:pointer;transition:color .1s;
+  }
+  .wheel-item.active{color:var(--ink);font-weight:800;font-size:24px;}
+  .wheel-colon{position:relative;z-index:1;font-size:22px;font-weight:800;color:var(--ink);padding:0 2px;}
+
+  /* ---- pdf export button ---- */
+  .btn-pdf{
+    display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(180deg,#e8503f,#c0392b);
+    color:#fff;border:none;border-radius:10px;padding:10px 16px;
+    font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;
+    box-shadow:0 4px 12px rgba(192,57,43,.28);
+    white-space:nowrap;
+  }
+  .btn-pdf:hover{filter:brightness(1.05);}
+  .btn-pdf:disabled{opacity:.6;cursor:default;}
+
+  @media(max-width:520px){
+    .wrap{padding:16px 10px 0;}
+    .controls{padding:12px;}
+    thead th{font-size:11.5px;padding:9px 5px;}
+    td{font-size:12.5px;padding:11px 5px;}
+    td.name-cell{font-size:13px;padding-left:10px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg>
+    </div>
+    <div class="title-block">
+      <h1>KIẾN TƯỜNG</h1>
+      <div class="sub">Điện Máy Xanh Kiến Tường</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="field">
+      <label for="weekStart">Chọn Thứ 2 đầu tuần</label>
+      <input type="date" id="weekStart">
+    </div>
+    <div class="range-label">Tuần hiển thị: <b id="rangeLabel">—</b></div>
+    <button class="btn-pdf" id="btnExportPdf">⬇ Xuất PDF</button>
+  </div>
+
+  <div class="day-tabs" id="dayTabs"></div>
+
+  <div class="table-card">
+    <div class="scroll-x" id="scrollX">
+      <table id="scheduleTable">
+        <thead>
+          <tr id="headRow">
+            <th class="corner">NHÂN VIÊN</th>
+          </tr>
+        </thead>
+        <tbody id="bodyRows"></tbody>
+      </table>
+    </div>
+    <div class="fade-right" id="fadeRight"></div>
+  </div>
+  <div class="hint">💡 Bấm vào 1 ô để chỉnh giờ làm hoặc đặt nghỉ OFF</div>
+
+  <div class="day-detail">
+    <h3 id="detailTitle">—</h3>
+    <div id="detailBody"></div>
+  </div>
+
+  <div class="note">
+    <span>⚠️</span>
+    <div><b>Lưu ý hệ thống:</b> Không được phép off cùng 1 ngày 50% PG.</div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h4 id="modalTitle">Chỉnh ca làm</h4>
+    <div class="sub" id="modalSub">—</div>
+
+    <div class="toggle-row">
+      <span>Nghỉ OFF tuần</span>
+      <label class="switch">
+        <input type="checkbox" id="offToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="wheel-group" id="timeFields">
+      <div class="wheel-block">
+        <label>Giờ vào</label>
+        <div class="wheel-pair">
+          <div class="wheel-band"></div>
+          <div class="wheel" id="startHourWheel"></div>
+          <div class="wheel-colon">:</div>
+          <div class="wheel" id="startMinuteWheel"></div>
+        </div>
+      </div>
+      <div class="wheel-block">
+        <label>Giờ ra</label>
+        <div class="wheel-pair">
+          <div class="wheel-band"></div>
+          <div class="wheel" id="endHourWheel"></div>
+          <div class="wheel-colon">:</div>
+          <div class="wheel" id="endMinuteWheel"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn cancel" id="btnCancel">Hủy</button>
+      <button class="btn save" id="btnSave">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const dayNames = ["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ Nhật"];
+
+// weekday index 0=Mon ... 6=Sun. Each employee's fixed weekly pattern.
+function s(start,end){ return {off:false,start:start,end:end}; }
+function off(){ return {off:true,start:"",end:""}; }
+
+const employees = [
+  { name:"DUY",  shifts:[ s("08:30","16:30"), s("08:30","16:30"), off(), s("08:30","16:30"), s("08:30","16:30"), s("08:30","16:30"), s("08:30","16:30") ] },
+  { name:"KIỂN", shifts:[ s("09:00","17:00"), s("09:00","17:00"), s("09:00","17:00"), s("09:00","17:00"), s("09:00","17:00"), s("12:00","20:00"), s("12:00","20:00") ] },
+  { name:"NHẬT", shifts:[ s("09:00","18:00"), s("09:00","18:00"), s("09:00","18:00"), s("09:00","18:00"), s("09:00","18:00"), off(), s("09:00","18:00") ] },
+  { name:"QUÂN", shifts:[ s("08:00","20:00"), off(), s("08:00","16:00"), s("12:00","20:00"), s("12:00","20:00"), s("12:00","20:00"), s("12:00","20:00") ] },
+];
+
+function shiftLabel(sh){
+  return sh.off ? "OFF TUẦN" : sh.start+" – "+sh.end;
+}
+
+let selectedDayIndex = 0;
+let weekDates = [];
+
+function pad(n){ return n.toString().padStart(2,"0"); }
+function fmt(d){ return pad(d.getDate())+"/"+pad(d.getMonth()+1); }
+function toISO(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+function mondayOf(date){
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function computeWeek(mondayDate){
+  weekDates = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(mondayDate);
+    d.setDate(d.getDate()+i);
+    weekDates.push(d);
+  }
+}
+
+function render(){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // range label
+  document.getElementById("rangeLabel").textContent = fmt(weekDates[0])+" – "+fmt(weekDates[6]);
+
+  // header row
+  const headRow = document.getElementById("headRow");
+  headRow.innerHTML = '<th class="corner">NHÂN VIÊN</th>';
+  weekDates.forEach((d,i)=>{
+    const th = document.createElement("th");
+    th.className = i===selectedDayIndex ? "col-active" : "";
+    th.innerHTML = '<span class="day">'+dayNames[i]+'</span><span class="date">'+fmt(d)+'</span>';
+    headRow.appendChild(th);
+  });
+
+  // body rows
+  const body = document.getElementById("bodyRows");
+  body.innerHTML = "";
+  employees.forEach((emp,empIdx)=>{
+    const tr = document.createElement("tr");
+    let html = '<td class="name-cell">'+emp.name+'</td>';
+    emp.shifts.forEach((sh,i)=>{
+      const active = i===selectedDayIndex ? "col-active" : "";
+      const inner = sh.off
+        ? '<span class="off">OFF TUẦN</span>'
+        : '<span class="shift-pill">'+sh.start+' – '+sh.end+'</span>';
+      html += '<td class="'+active+'"><button type="button" class="cell-btn" data-emp="'+empIdx+'" data-day="'+i+'">'+inner+'</button></td>';
+    });
+    tr.innerHTML = html;
+    body.appendChild(tr);
+  });
+
+  // attach click handlers to open edit modal
+  body.querySelectorAll(".cell-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      openModal(parseInt(btn.dataset.emp), parseInt(btn.dataset.day));
+    });
+  });
+
+  // day tabs
+  const tabs = document.getElementById("dayTabs");
+  tabs.innerHTML = "";
+  weekDates.forEach((d,i)=>{
+    const pill = document.createElement("div");
+    pill.className = "day-pill" + (i===selectedDayIndex ? " active" : "") + (sameDay(d,today) ? " today" : "");
+    pill.innerHTML = dayNames[i] + '<span class="d">'+fmt(d)+'</span>';
+    pill.onclick = ()=>{ selectedDayIndex = i; render(); scrollToActiveColumn(); };
+    tabs.appendChild(pill);
+  });
+
+  // detail card for selected day
+  const dTitle = document.getElementById("detailTitle");
+  const isToday = sameDay(weekDates[selectedDayIndex], today);
+  dTitle.innerHTML = dayNames[selectedDayIndex] + " · " + fmt(weekDates[selectedDayIndex]) + (isToday ? ' <span>(hôm nay)</span>' : '');
+  const dBody = document.getElementById("detailBody");
+  dBody.innerHTML = "";
+  employees.forEach((emp,empIdx)=>{
+    const sh = emp.shifts[selectedDayIndex];
+    const row = document.createElement("div");
+    row.className = "detail-row";
+    row.innerHTML = '<span class="emp">'+emp.name+'</span>' +
+      '<button type="button" class="cell-btn" data-emp="'+empIdx+'" data-day="'+selectedDayIndex+'">' +
+      (sh.off ? '<span class="off">OFF TUẦN</span>' : '<span class="shift-pill">'+sh.start+' – '+sh.end+'</span>') +
+      '</button>';
+    dBody.appendChild(row);
+  });
+  dBody.querySelectorAll(".cell-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      openModal(parseInt(btn.dataset.emp), parseInt(btn.dataset.day));
+    });
+  });
+}
+
+/* ---- edit modal logic ---- */
+const modalOverlay = document.getElementById("modalOverlay");
+const offToggle = document.getElementById("offToggle");
+const timeFields = document.getElementById("timeFields");
+const modalTitle = document.getElementById("modalTitle");
+const modalSub = document.getElementById("modalSub");
+let editingEmp = null, editingDay = null;
+
+const ITEM_H = 50;
+
+function buildWheel(el, max){
+  el.innerHTML = "";
+  for(let i=0;i<=max;i++){
+    const item = document.createElement("div");
+    item.className = "wheel-item";
+    item.textContent = pad(i);
+    el.appendChild(item);
+  }
+  // spacers so first/last items can center in the wheel
+  el.style.paddingTop = ITEM_H+"px";
+  el.style.paddingBottom = ITEM_H+"px";
+  el._max = max;
+  el._value = 0;
+
+  // Rely purely on native scroll-snap for positioning (smooth in both
+  // directions, no fighting with JS-driven scrollTo). We only read the
+  // scroll position to update the bold/active label and the stored value.
+  let ticking = false;
+  el.addEventListener("scroll", ()=>{
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(()=>{
+      const idx = Math.round(el.scrollTop / ITEM_H);
+      highlightWheel(el, idx);
+      ticking = false;
+    });
+  }, { passive:true });
+
+  el.querySelectorAll(".wheel-item").forEach((item,idx)=>{
+    item.addEventListener("click", ()=>{
+      el.scrollTo({top: idx*ITEM_H, behavior:"smooth"});
+    });
+  });
+}
+
+function highlightWheel(el, idx){
+  idx = Math.max(0, Math.min(idx, el._max));
+  el.querySelectorAll(".wheel-item").forEach((item,i)=>{
+    item.classList.toggle("active", i===idx);
+  });
+  el._value = idx;
+}
+
+function setWheelValue(el, value){
+  value = Math.max(0, Math.min(value, el._max));
+  el.scrollTop = value*ITEM_H;
+  highlightWheel(el, value);
+  el._value = value;
+}
+
+function getWheelValue(el){
+  const idx = Math.round(el.scrollTop / ITEM_H);
+  return Math.max(0, Math.min(idx, el._max));
+}
+
+const startHourWheel = document.getElementById("startHourWheel");
+const startMinuteWheel = document.getElementById("startMinuteWheel");
+const endHourWheel = document.getElementById("endHourWheel");
+const endMinuteWheel = document.getElementById("endMinuteWheel");
+buildWheel(startHourWheel, 23);
+buildWheel(startMinuteWheel, 59);
+buildWheel(endHourWheel, 23);
+buildWheel(endMinuteWheel, 59);
+
+function openModal(empIdx, dayIdx){
+  editingEmp = empIdx;
+  editingDay = dayIdx;
+  const emp = employees[empIdx];
+  const sh = emp.shifts[dayIdx];
+  modalTitle.textContent = "Chỉnh ca làm — " + emp.name;
+  modalSub.textContent = dayNames[dayIdx] + " · " + fmt(weekDates[dayIdx]);
+  offToggle.checked = sh.off;
+
+  const [sh1,sm1] = (sh.off ? "08:00" : sh.start).split(":").map(Number);
+  const [eh1,em1] = (sh.off ? "17:00" : sh.end).split(":").map(Number);
+  setWheelValue(startHourWheel, sh1);
+  setWheelValue(startMinuteWheel, sm1);
+  setWheelValue(endHourWheel, eh1);
+  setWheelValue(endMinuteWheel, em1);
+
+  timeFields.classList.toggle("disabled", sh.off);
+  modalOverlay.classList.add("open");
+}
+
+function closeModal(){
+  modalOverlay.classList.remove("open");
+  editingEmp = null;
+  editingDay = null;
+}
+
+offToggle.addEventListener("change", ()=>{
+  timeFields.classList.toggle("disabled", offToggle.checked);
+});
+
+document.getElementById("btnCancel").addEventListener("click", closeModal);
+modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeModal(); });
+
+document.getElementById("btnSave").addEventListener("click", ()=>{
+  if(editingEmp === null) return;
+  const sh = employees[editingEmp].shifts[editingDay];
+  if(offToggle.checked){
+    sh.off = true;
+    sh.start = "";
+    sh.end = "";
+  } else {
+    sh.off = false;
+    sh.start = pad(getWheelValue(startHourWheel))+":"+pad(getWheelValue(startMinuteWheel));
+    sh.end = pad(getWheelValue(endHourWheel))+":"+pad(getWheelValue(endMinuteWheel));
+  }
+  closeModal();
+  render();
+});
+
+function scrollToActiveColumn(){
+  const scrollX = document.getElementById("scrollX");
+  const activeTh = document.querySelectorAll("#headRow th")[selectedDayIndex+1];
+  if(activeTh){
+    const target = activeTh.offsetLeft - 90;
+    scrollX.scrollTo({left: Math.max(target,0), behavior:"smooth"});
+  }
+}
+
+const weekStartInput = document.getElementById("weekStart");
+weekStartInput.addEventListener("change", ()=>{
+  if(!weekStartInput.value) return;
+  const picked = new Date(weekStartInput.value+"T00:00:00");
+  const monday = mondayOf(picked);
+  weekStartInput.value = toISO(monday);
+  selectedDayIndex = 0;
+  computeWeek(monday);
+  render();
+});
+
+// fade-right visibility based on scroll position
+const scrollX = document.getElementById("scrollX");
+const fadeRight = document.getElementById("fadeRight");
+function updateFade(){
+  const atEnd = scrollX.scrollLeft + scrollX.clientWidth >= scrollX.scrollWidth - 4;
+  fadeRight.style.opacity = atEnd ? "0" : "1";
+}
+scrollX.addEventListener("scroll", updateFade);
+window.addEventListener("resize", updateFade);
+
+/* ---- PDF export ---- */
+const btnExportPdf = document.getElementById("btnExportPdf");
+btnExportPdf.addEventListener("click", exportPdf);
+
+async function exportPdf(){
+  btnExportPdf.disabled = true;
+  const originalLabel = btnExportPdf.innerHTML;
+  btnExportPdf.innerHTML = "⏳ Đang tạo PDF...";
+
+  // Build a clean, non-scrolling export version so the full week (incl. Chủ Nhật) is captured
+  const exportRoot = document.createElement("div");
+  exportRoot.style.position = "fixed";
+  exportRoot.style.left = "-99999px";
+  exportRoot.style.top = "0";
+  exportRoot.style.background = "#ffffff";
+  exportRoot.style.padding = "28px 26px";
+  exportRoot.style.width = "fit-content";
+  exportRoot.style.fontFamily = "'Segoe UI', Roboto, -apple-system, sans-serif";
+
+  const title = document.createElement("div");
+  title.style.fontSize = "26px";
+  title.style.fontWeight = "800";
+  title.style.color = "#0a5c36";
+  title.style.marginBottom = "2px";
+  title.textContent = "KIẾN TƯỜNG";
+
+  const sub = document.createElement("div");
+  sub.style.fontSize = "13px";
+  sub.style.color = "#5c6b62";
+  sub.style.marginBottom = "6px";
+  sub.textContent = "Điện Máy Xanh Kiến Tường";
+
+  const range = document.createElement("div");
+  range.style.fontSize = "14px";
+  range.style.color = "#33443a";
+  range.style.marginBottom = "16px";
+  range.innerHTML = "Tuần hiển thị: <b style='color:#0a5c36'>" + fmt(weekDates[0]) + " – " + fmt(weekDates[6]) + "</b>";
+
+  const clonedTable = document.getElementById("scheduleTable").cloneNode(true);
+  clonedTable.style.minWidth = "0";
+  clonedTable.style.width = "100%";
+  // remove interactive buttons, keep plain content, remove active-column highlight
+  clonedTable.querySelectorAll(".cell-btn").forEach(btn=>{
+    const span = btn.firstElementChild;
+    btn.replaceWith(span);
+  });
+  clonedTable.querySelectorAll(".col-active").forEach(el=>el.classList.remove("col-active"));
+
+  const note = document.createElement("div");
+  note.style.marginTop = "16px";
+  note.style.fontSize = "12.5px";
+  note.style.color = "#6b5311";
+  note.style.background = "#fff8e8";
+  note.style.border = "1px solid #f3dfa4";
+  note.style.borderLeft = "5px solid #d9a11a";
+  note.style.borderRadius = "10px";
+  note.style.padding = "10px 14px";
+  note.innerHTML = "<b>Lưu ý hệ thống:</b> Không được phép off cùng 1 ngày 50% PG.";
+
+  exportRoot.appendChild(title);
+  exportRoot.appendChild(sub);
+  exportRoot.appendChild(range);
+  exportRoot.appendChild(clonedTable);
+  exportRoot.appendChild(note);
+  document.body.appendChild(exportRoot);
+
+  try{
+    const canvas = await html2canvas(exportRoot, { scale: 2, backgroundColor: "#ffffff" });
+    const imgData = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+
+    // Page sized to exactly match the content aspect ratio so it fills
+    // the screen nicely when opened on an iPhone or Android PDF viewer.
+    const orientation = canvas.width >= canvas.height ? "landscape" : "portrait";
+    const pdf = new jsPDF({
+      orientation,
+      unit: "px",
+      format: [canvas.width, canvas.height]
+    });
+    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+    const fname = "lich-lam-viec-" + toISO(weekDates[0]) + "_" + toISO(weekDates[6]) + ".pdf";
+    pdf.save(fname);
+  } catch(err){
+    alert("Có lỗi khi tạo PDF, vui lòng thử lại.");
+    console.error(err);
+  } finally {
+    document.body.removeChild(exportRoot);
+    btnExportPdf.disabled = false;
+    btnExportPdf.innerHTML = originalLabel;
+  }
+}
+
+// init: default to Monday 08/06/2026 (matches original schedule), or current week if today falls later
+const defaultMonday = new Date("2026-06-08T00:00:00");
+weekStartInput.value = toISO(defaultMonday);
+const today0 = new Date(); today0.setHours(0,0,0,0);
+const initMonday = mondayOf(today0);
+computeWeek(defaultMonday);
+render();
+setTimeout(updateFade, 50);
+</script>
+</body>
+</html>
